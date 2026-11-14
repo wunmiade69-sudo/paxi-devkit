@@ -900,7 +900,7 @@ export async function doctorDatabaseCommand(args = []) {
     if (report.database?.generatedName) console.log(`Generated disposable database: ${report.database.generatedName}`);
     for (const item of report.results || []) console.log(`  [${item.status.toUpperCase()}] ${item.name}${item.message ? ` — ${item.message}` : ''}`);
   }
-  console.log(engine === 'sqlite' ? 'Only SQLite-compatible SQL was executed in an in-memory database.' : 'A random database and restricted test user/login were created on the explicitly configured loopback server and cleanup was attempted.');
+  if (!json) console.log(engine === 'sqlite' ? 'Only SQLite-compatible SQL was executed in an in-memory database.' : 'A random database and restricted test user/login were created on the explicitly configured loopback server and cleanup was attempted.');
   if (!report.passed) process.exitCode = 1;
   return report;
 }
