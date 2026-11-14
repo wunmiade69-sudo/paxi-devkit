@@ -20,7 +20,7 @@ jobs:
     env:
       PAXI_TEST_POSTGRES_ADMIN_URL: postgresql://paxi_ci:paxi_ci_password@127.0.0.1:5432/postgres
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -57,7 +57,7 @@ jobs:
     env:
       PAXI_TEST_MYSQL_ADMIN_URL: mysql://root:paxi_ci_password@127.0.0.1:3306/mysql
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -94,7 +94,7 @@ jobs:
     env:
       PAXI_TEST_MARIADB_ADMIN_URL: mariadb://root:paxi_ci_password@127.0.0.1:3306/mysql
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v4
         with:
           node-version: 22
