@@ -142,11 +142,54 @@ test('OpenAI-compatible, Anthropic and Gemini adapters send provider-specific re
   assert.doesNotMatch(calls[2].url, /google-key/);
 });
 
+test('AI transport rejects invalid request arguments before contacting a provider', async () => {
+  const originalFetch = globalThis.fetch;
+  let called = false;
+  globalThis.fetch = async () => { called = true; return new Response('{}', { status: 200 }); };
+  try {
+    const base = { providerId: 'openai', apiKey: 'test-key', model: 'test-model', messages: [{ role: 'user', content: 'hello' }] };
+    await assert.rejects(() => transport.requestModel({ ...base, maxTokens: 0 }), /maxTokens/);
+    await assert.rejects(() => transport.requestModel({ ...base, maxTokens: 1.5 }), /maxTokens/);
+    await assert.rejects(() => transport.requestModel({ ...base, temperature: 3 }), /temperature/);
+    await assert.rejects(() => transport.requestModel({ ...base, messages: [{ role: 'tool', content: 'hello' }] }), /unsupported role/);
+    await assert.rejects(() => transport.requestModel({ ...base, messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'https://example.com/image.png' } }] }] }), /base64 data:image/);
+    assert.equal(called, false);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test('AI transport handles chunked JSON and reports rate limits without retrying a billable POST', async (t) => {
+  const originalFetch = globalThis.fetch;
+  const chunks = [Buffer.from('{"choices":[{"message":{"content":"streamed '), Buffer.from('answer"}}]}')];
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    if (calls === 1) return new Response(new ReadableStream({ start(controller) { for (const chunk of chunks) controller.enqueue(chunk); controller.close(); } }), { status: 200 });
+    return new Response(JSON.stringify({ error: { message: 'rate limited' } }), { status: 429 });
+  };
+  t.after(() => { globalThis.fetch = originalFetch; });
+  const result = await transport.requestModel({ providerId: 'deepseek', apiKey: 'test-key', model: 'stream-contract-test', messages: [{ role: 'user', content: 'hello' }] });
+  assert.equal(result.answer, 'streamed answer');
+  await assert.rejects(() => transport.requestModel({ providerId: 'deepseek', apiKey: 'test-key', model: 'rate-limit-contract-test', messages: [{ role: 'user', content: 'hello' }] }), /rate limited/);
+  assert.equal(calls, 2);
+});
+
 test('model catalogue includes compact local models and download requires explicit confirmation', async () => {
   const catalog = models.getModelCatalog();
   assert.ok(catalog.gguf.some((item) => item.id === 'qwen35-08b-q4km'));
   await assert.rejects(() => models.downloadCatalogModel('qwen35-08b-q4km'), /--confirm/);
   await assert.rejects(() => models.downloadCatalogModel('../../outside', { confirm: true }), /Unknown local model/);
+});
+
+test('local model inventory ignores symlinked GGUF files', async () => {
+  const target = path.join(temp, 'outside-model.gguf');
+  const link = path.join(AI_MODELS_DIR, 'symlinked-model.gguf');
+  await fs.writeFile(target, 'GGUF-not-installed');
+  await fs.mkdir(AI_MODELS_DIR, { recursive: true });
+  await fs.symlink(target, link);
+  try {
+    const installed = await models.listInstalledModels();
+    assert.equal(installed.some((item) => item.name === 'symlinked-model.gguf'), false);
+  } finally { await fs.rm(link, { force: true }); await fs.rm(target, { force: true }); }
 });
 
 test('GGUF download verifies Hugging Face metadata, file signature, exact size and SHA-256 before install', async (t) => {

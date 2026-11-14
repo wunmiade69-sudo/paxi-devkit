@@ -1,6 +1,6 @@
 # PAXI DevKit V2.1.1 — verification record
 
-Creator attribution and voluntary support information are documented in [CREDITS_AND_SUPPORT.md](CREDITS_AND_SUPPORT.md); payment details are reproduced as supplied and are not independently verified.
+Creator attribution and project support links are in [CREDITS_AND_SUPPORT.md](CREDITS_AND_SUPPORT.md). Donation details are published only on the company website.
 
 ## Verification run (2026-11-11)
 The supplied archive was extracted to a clean working directory, then `npm ci`, `npm run check`, `npm test`, `node bin/paxi.mjs version`, and both human-readable and JSON `paxi doctor` modes were run.

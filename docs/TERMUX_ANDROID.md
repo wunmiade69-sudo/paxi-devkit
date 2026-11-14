@@ -112,3 +112,31 @@ paxi build --platform android --format apk --debug --install
 
 PAXI identifies the Termux userland by the `PREFIX` environment variable containing `/com.termux/files/usr` (and a non-empty `HOME`). It does not treat every Node.js runtime reporting Android as Termux. This distinction prevents ordinary Android-hosted test processes from accidentally activating Termux-only AAPT2 checks while real Termux sessions retain the ARM64 AAPT2 and Gradle worker safeguards.
 
+## Install, update, and uninstall
+
+For the first installation from a public GitHub checkout, clone or extract the release under `$HOME/projects`, run `npm ci`, and then run `bash scripts/install-termux.sh`. For an update, fetch or extract the new version into a fresh versioned directory and run the installer again; the launcher is replaced only after the new local installation passes its version check.
+
+```bash
+cd "$HOME/projects/paxi-devkit"
+git pull --ff-only origin main
+npm ci
+bash scripts/install-termux.sh
+paxi version
+```
+
+The installer keeps versioned copies under `$HOME/.local/share/paxi-devkit` when the source originated in shared storage or another external path. To remove PAXI without touching Node.js, Flutter, Gradle, ADB, or project files, remove the launcher and PAXI's managed copies after checking the paths:
+
+```bash
+command -v paxi
+ls -la "$HOME/.local/share/paxi-devkit" 2>/dev/null || true
+rm -f "$PREFIX/bin/paxi"
+rm -rf "$HOME/.local/share/paxi-devkit"
+```
+
+If the source directory itself is a private-storage checkout, deleting that checkout is optional and does not remove any unrelated projects.
+
+## Common installation failures
+
+If the installer says it must run inside Termux, the script was launched on a desktop shell or Android shell that is not the real Termux environment. If `npm ci` reports an unsupported Node version, install `nodejs-lts` and start a new session. If the launcher is not found, run `hash -r`, open a new Termux session, and confirm that `$PREFIX/bin` is on `PATH`.
+
+If installation refuses to overwrite `$PREFIX/bin/paxi`, inspect the existing file before deleting anything. PAXI intentionally refuses to replace an unrelated command. If a release was extracted under shared storage, rerun the installer from that location; it will copy the source into Termux-private managed storage before creating the launcher.

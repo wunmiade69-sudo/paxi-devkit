@@ -127,7 +127,8 @@ export async function listInstalledModels() {
   await ensureModelDirectory();
   for (const name of await fs.readdir(AI_MODELS_DIR)) {
     if (name.endsWith('.gguf')) {
-      const info = await fs.stat(path.join(AI_MODELS_DIR, name));
+      const info = await fs.lstat(path.join(AI_MODELS_DIR, name));
+      if (!info.isFile() || info.isSymbolicLink()) continue;
       models.push({ runtime: 'llama.cpp', name, path: path.join(AI_MODELS_DIR, name), bytes: info.size });
     }
   }

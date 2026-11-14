@@ -28,6 +28,29 @@ function normalizeMessages(messages) {
   return messages.map((message) => ({ role: message.role, content: message.content }));
 }
 
+function validateMessages(messages) {
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 200) throw new Error('AI messages must be a non-empty array of at most 200 messages.');
+  for (const [index, message] of messages.entries()) {
+    if (!message || !['system', 'user', 'assistant'].includes(message.role)) throw new Error(`AI message ${index + 1} has an unsupported role.`);
+    if (typeof message.content === 'string') continue;
+    if (!Array.isArray(message.content) || message.content.length === 0 || message.content.length > 100) throw new Error(`AI message ${index + 1} content must be text or a bounded content-part array.`);
+    for (const [partIndex, part] of message.content.entries()) {
+      if (part?.type === 'text' && typeof part.text === 'string') continue;
+      const imageUrl = part?.type === 'image_url' ? part.image_url?.url : null;
+      if (typeof imageUrl === 'string' && /^data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/]+={0,2}$/.test(imageUrl)) continue;
+      throw new Error(`AI message ${index + 1} content part ${partIndex + 1} is unsupported; use text or a base64 data:image URL.`);
+    }
+  }
+}
+
+function validateRequestArguments({ model, messages, maxTokens, temperature, maxResponseBytes }) {
+  if (typeof model !== 'string' || !model.trim() || model.length > 180 || /[\r\n\0]/.test(model)) throw new Error('AI model ID must be 1–180 characters with no control characters.');
+  if (!Number.isSafeInteger(maxTokens) || maxTokens < 1 || maxTokens > 128_000) throw new Error('AI maxTokens must be an integer between 1 and 128000.');
+  if (!Number.isFinite(temperature) || temperature < 0 || temperature > 2) throw new Error('AI temperature must be a number between 0 and 2.');
+  if (!Number.isSafeInteger(maxResponseBytes) || maxResponseBytes < 1024 || maxResponseBytes > 50 * 1024 * 1024) throw new Error('AI maxResponseBytes must be an integer between 1024 and 52428800.');
+  validateMessages(messages);
+}
+
 function extractText(value) {
   if (typeof value === 'string') return value.trim();
   if (Array.isArray(value)) return value.map((part) => typeof part?.text === 'string' ? part.text : '').filter(Boolean).join('\n').trim();
@@ -35,6 +58,7 @@ function extractText(value) {
 }
 
 export async function requestModel({ providerId, baseUrl, apiKey, model, messages, maxTokens = 1800, temperature = 0.2, signal, maxResponseBytes = 2 * 1024 * 1024 }) {
+  validateRequestArguments({ model, messages, maxTokens, temperature, maxResponseBytes });
   const provider = getProvider(providerId);
   const base = new URL(baseUrl || provider.baseUrl);
   const local = provider.category === 'local';

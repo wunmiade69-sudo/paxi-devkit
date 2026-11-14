@@ -8,12 +8,13 @@ import { resolveTaskRoute } from '../ai/task-router.mjs';
 import { recommendAgentRoute } from '../ai/agent-selector.mjs';
 import { listVaultProviders, vaultExists } from '../ai/vault.mjs';
 
-function parseUrl(value, allowRemote) {
+export function parseUrl(value, allowRemote) {
   const url = new URL(value);
   if (url.username || url.password || url.search || url.hash) throw new Error('Do not embed credentials, query strings or fragments in the AI endpoint URL.');
   const loopback = ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname);
-  if (url.protocol !== 'https:' && !(loopback && url.protocol === 'http:')) throw new Error('AI endpoints must use HTTPS. HTTP is permitted only for localhost.');
-  if (!allowRemote && !loopback) throw new Error('Local AI mode only connects to localhost.');
+  if (!allowRemote) {
+    if (!loopback || url.protocol !== 'http:') throw new Error('Local AI mode requires an HTTP localhost/loopback endpoint.');
+  } else if (url.protocol !== 'https:') throw new Error('AI endpoints must use HTTPS. HTTP is permitted only for localhost.');
   return url;
 }
 

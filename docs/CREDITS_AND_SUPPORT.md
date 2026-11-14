@@ -8,17 +8,11 @@ ChatGPT helped as the AI development team. Manus assisted with independent revie
 
 This work is offered to **Paxi Innovation Limited** in support of its continued work. This statement records the project owner's contribution intent; it does not amend the MIT license or itself constitute a separate legal assignment of intellectual-property rights. Any separate ownership or assignment terms should be documented in an agreement between the relevant parties.
 
-## Voluntary project support
+## Support the project
 
-Voluntary contributions intended to support continued PAXI work may be sent to the account designated for the company's secretary:
+Donation details are on the company website: <https://paxitoken.netlify.app/>. PAXI is also on X: <https://x.com/Pax_i_Token>.
 
-| Detail | Supplied information |
-|---|---|
-| Bank | Zenith Bank |
-| Account name | Oyafunke Adewunmi Joel |
-| Account number | 2274118162 |
-
-These payment details were supplied by the project owner and have not been independently verified. Before making a transfer, confirm the recipient, account ownership and current payment instructions through an official Paxi Innovation Limited channel. The named account is shown as supplied and is not represented here as a corporate bank account. No currency, tax treatment, receipt, or other donation condition is stated because none was provided.
+Please get payment details only from the official website. This repository does not publish bank or account details.
 
 ## License
 

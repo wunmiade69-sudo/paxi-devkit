@@ -113,6 +113,20 @@ test('AI budget records provider usage with user-configured rates and monthly le
   assert.ok(monthlyBlocked.errors.some((item) => /monthly cap/.test(item)));
 });
 
+test('AI budget rejects malformed provider token counts instead of recording negative spend', async () => {
+  const { setAiModelPricing, previewAiBudget, recordAiBudgetUsage } = await import('../src/ai/budget.mjs');
+  await setAiModelPricing('deepseek', 'malformed-usage-test', 1, 2);
+  const preview = await previewAiBudget({ provider: 'deepseek', model: 'malformed-usage-test', messages: [{ role: 'user', content: 'hello' }], maxTokens: 20, local: false });
+  const recorded = await recordAiBudgetUsage({ provider: 'deepseek', model: 'malformed-usage-test', usage: { prompt_tokens: -100, completion_tokens: '12.5' }, budgetPreview: preview, local: false });
+  assert.equal(recorded.inputTokens, preview.inputTokensEstimated);
+  assert.equal(recorded.outputTokens, preview.outputTokensRequested);
+  assert.equal(recorded.source, 'estimated');
+  assert.ok(recorded.costUsd >= 0);
+  const nonFinite = await recordAiBudgetUsage({ provider: 'deepseek', model: 'malformed-usage-test', usage: { prompt_tokens: Number.NaN, completion_tokens: Number.POSITIVE_INFINITY }, budgetPreview: preview, local: false });
+  assert.equal(nonFinite.source, 'estimated');
+  assert.ok(Number.isFinite(nonFinite.costUsd));
+});
+
 test('cloud model transport blocks a call before fetch when configured spend limits cannot be evaluated', async () => {
   const { setAiBudgetLimit } = await import('../src/ai/budget.mjs');
   const { requestModel } = await import('../src/ai/transport.mjs');

@@ -95,9 +95,12 @@ export async function previewAiBudget({ provider, model, messages, maxTokens = 2
 }
 
 function normalizeUsage(usage, estimatedInput, estimatedOutput) {
-  const input = usage?.prompt_tokens ?? usage?.input_tokens ?? usage?.promptTokenCount ?? estimatedInput;
-  const output = usage?.completion_tokens ?? usage?.output_tokens ?? usage?.candidatesTokenCount ?? estimatedOutput;
-  return { inputTokens: Number.isFinite(input) ? input : estimatedInput, outputTokens: Number.isFinite(output) ? output : estimatedOutput, source: usage ? 'provider-usage' : 'estimated' };
+  const input = usage?.prompt_tokens ?? usage?.input_tokens ?? usage?.promptTokenCount;
+  const output = usage?.completion_tokens ?? usage?.output_tokens ?? usage?.candidatesTokenCount;
+  const validCount = (value) => Number.isSafeInteger(value) && value >= 0;
+  const inputTokens = validCount(input) ? input : estimatedInput;
+  const outputTokens = validCount(output) ? output : estimatedOutput;
+  return { inputTokens, outputTokens, source: usage && validCount(input) && validCount(output) ? 'provider-usage' : 'estimated' };
 }
 
 export async function recordAiBudgetUsage({ provider, model, usage, budgetPreview, local = false }) {
