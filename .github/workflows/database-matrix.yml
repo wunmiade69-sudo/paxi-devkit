@@ -1,0 +1,126 @@
+name: PAXI disposable database integration
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paxi-database-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: PostgreSQL 16 disposable migration lab
+    runs-on: ubuntu-24.04
+    env:
+      PAXI_TEST_POSTGRES_ADMIN_URL: postgresql://paxi_ci:paxi_ci_password@127.0.0.1:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: npm ci
+      - name: Start isolated PostgreSQL service on runner loopback
+        run: |
+          docker run -d --network host --name paxi-postgres -e POSTGRES_USER=paxi_ci -e POSTGRES_PASSWORD=paxi_ci_password -e POSTGRES_DB=postgres postgres:16
+          for attempt in $(seq 1 30); do
+            if pg_isready -h 127.0.0.1 -p 5432 -U paxi_ci -d postgres; then exit 0; fi
+            sleep 2
+          done
+          docker logs paxi-postgres
+          exit 1
+      - name: Run disposable PostgreSQL migration lab
+        run: node bin/paxi.mjs doctor database lab --engine postgres --project . --migrations tests/fixtures/database-service-migrations --confirm --json > postgres-report.json
+      - name: Assert migration and cleanup evidence
+        run: node scripts/assert-database-lab-report.mjs postgres-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-postgres-report
+          path: postgres-report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove database service
+        if: always()
+        run: docker rm -f paxi-postgres || true
+
+  mysql:
+    name: MySQL 8.4 disposable migration lab
+    runs-on: ubuntu-24.04
+    env:
+      PAXI_TEST_MYSQL_ADMIN_URL: mysql://root:paxi_ci_password@127.0.0.1:3306/mysql
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y default-mysql-client
+      - run: npm ci
+      - name: Start isolated MySQL service on runner loopback
+        run: |
+          docker run -d --network host --name paxi-mysql -e MYSQL_ROOT_PASSWORD=paxi_ci_password mysql:8.4
+          for attempt in $(seq 1 45); do
+            if mysqladmin ping --protocol=TCP -h 127.0.0.1 -P 3306 -uroot -ppaxi_ci_password --silent; then exit 0; fi
+            sleep 2
+          done
+          docker logs paxi-mysql
+          exit 1
+      - name: Run disposable MySQL migration lab
+        run: node bin/paxi.mjs doctor database lab --engine mysql --project . --migrations tests/fixtures/database-service-migrations --confirm --json > mysql-report.json
+      - name: Assert migration and cleanup evidence
+        run: node scripts/assert-database-lab-report.mjs mysql-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-mysql-report
+          path: mysql-report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove database service
+        if: always()
+        run: docker rm -f paxi-mysql || true
+
+  mariadb:
+    name: MariaDB 11 disposable migration lab
+    runs-on: ubuntu-24.04
+    env:
+      PAXI_TEST_MARIADB_ADMIN_URL: mariadb://root:paxi_ci_password@127.0.0.1:3306/mysql
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: sudo apt-get update && sudo apt-get install -y mariadb-client
+      - run: npm ci
+      - name: Start isolated MariaDB service on runner loopback
+        run: |
+          docker run -d --network host --name paxi-mariadb -e MARIADB_ROOT_PASSWORD=paxi_ci_password mariadb:11
+          for attempt in $(seq 1 45); do
+            if mariadb-admin ping --protocol=TCP -h 127.0.0.1 -P 3306 -uroot -ppaxi_ci_password --silent; then exit 0; fi
+            sleep 2
+          done
+          docker logs paxi-mariadb
+          exit 1
+      - name: Run disposable MariaDB migration lab
+        run: node bin/paxi.mjs doctor database lab --engine mariadb --project . --migrations tests/fixtures/database-service-migrations --confirm --json > mariadb-report.json
+      - name: Assert migration and cleanup evidence
+        run: node scripts/assert-database-lab-report.mjs mariadb-report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: database-mariadb-report
+          path: mariadb-report.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove database service
+        if: always()
+        run: docker rm -f paxi-mariadb || true

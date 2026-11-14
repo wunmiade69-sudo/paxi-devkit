@@ -1,0 +1,32 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage/
+.dart_tool/
+.gradle/
+**/build/
+*.apk
+*.aab
+local.properties
+key.properties
+*.jks
+*.keystore
+*.pem
+*.p12
+*.pfx
+
+# iOS / Xcode outputs
+*.ipa
+*.xcarchive/
+DerivedData/
+Pods/
+*.xcuserstate
+
+# Local editor settings
+.idea/
+
+# PAXI project-local diagnostic logs
+.paxi/

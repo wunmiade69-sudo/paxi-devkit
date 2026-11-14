@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "name": "Local PAXI API smoke tests",
+  "baseUrl": "http://127.0.0.1:8080/api",
+  "cases": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/health",
+      "expectedStatus": [200],
+      "contentTypeIncludes": "application/json",
+      "jsonPathsExist": ["status"]
+    }
+  ]
+}

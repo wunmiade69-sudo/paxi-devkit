@@ -1,0 +1,54 @@
+name: PAXI browser QA matrix
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: paxi-browser-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser-tests:
+    name: ${{ matrix.browser }} semantic + accessibility QA
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Install optional browser test packages
+        run: npm install --no-save --ignore-scripts playwright axe-core
+      - name: Install browser engine
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run real browser integration tests
+        env:
+          PAXI_BROWSER_ENGINE: ${{ matrix.browser }}
+        shell: bash
+        run: |
+          mkdir -p browser-artifacts
+          set +e
+          node --test --test-reporter=tap --test-concurrency=1 tests/website-accessibility-real-browser.test.mjs tests/website-real-browser.test.mjs > "browser-artifacts/${PAXI_BROWSER_ENGINE}-results.tap" 2>&1
+          result=$?
+          cat "browser-artifacts/${PAXI_BROWSER_ENGINE}-results.tap"
+          exit "$result"
+      - name: Upload browser evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-${{ matrix.browser }}-test-evidence
+          path: browser-artifacts/
+          if-no-files-found: warn
+          retention-days: 14

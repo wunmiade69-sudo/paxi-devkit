@@ -1,0 +1,59 @@
+{
+  "name": "@paxi/devkit",
+  "version": "2.7.0",
+  "description": "Local-first cross-platform developer terminal with PAXI Doctor, security testing, reliable Termux launcher, SPDX-aware licensing, SBOM schema checks and adaptive software QA.",
+  "author": "Adewunmi",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "paxi": "./bin/paxi.mjs"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1",
+    "check": "node scripts/check.mjs"
+  },
+  "dependencies": {},
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "termux",
+    "android",
+    "ios",
+    "windows",
+    "macos",
+    "linux",
+    "flutter",
+    "gradle",
+    "xcode",
+    "local-build",
+    "developer-tools",
+    "paxi",
+    "opentelemetry",
+    "sqlite",
+    "sbom",
+    "cyclonedx",
+    "osv-scanner",
+    "playwright",
+    "software-testing",
+    "postgresql",
+    "mysql",
+    "mariadb",
+    "license-policy",
+    "supply-chain-security"
+  ],
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    "examples",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "package.json"
+  ]
+}

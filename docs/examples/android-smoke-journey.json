@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "name": "Example sign-in journey",
+  "description": "Replace the resource IDs and environment variable with values from your own app.",
+  "steps": [
+    {
+      "type": "assertVisible",
+      "selector": {
+        "resourceId": "com.example.app:id/sign_in"
+      }
+    },
+    {
+      "type": "tap",
+      "selector": {
+        "resourceId": "com.example.app:id/email"
+      }
+    },
+    {
+      "type": "type",
+      "valueEnv": "PAXI_TEST_EMAIL"
+    },
+    {
+      "type": "tap",
+      "selector": {
+        "resourceId": "com.example.app:id/password"
+      }
+    },
+    {
+      "type": "type",
+      "valueEnv": "PAXI_TEST_PASSWORD"
+    },
+    {
+      "type": "tap",
+      "selector": {
+        "text": "Sign in"
+      }
+    },
+    {
+      "type": "wait",
+      "ms": 1200
+    },
+    {
+      "type": "assertVisible",
+      "selector": {
+        "resourceId": "com.example.app:id/home_screen"
+      }
+    },
+    {
+      "type": "screenshot",
+      "name": "signed-in-home"
+    }
+  ]
+}

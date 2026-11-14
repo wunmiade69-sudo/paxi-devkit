@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "name": "Example profile smoke journey",
+  "description": "Local/staging example. Use a dedicated non-production test account.",
+  "steps": [
+    {
+      "type": "assertVisible",
+      "target": {
+        "role": "heading",
+        "name": "Sign in"
+      }
+    },
+    {
+      "type": "fill",
+      "target": {
+        "label": "Email address"
+      },
+      "valueEnv": "PAXI_TEST_EMAIL"
+    },
+    {
+      "type": "fill",
+      "target": {
+        "label": "Password"
+      },
+      "valueEnv": "PAXI_TEST_PASSWORD"
+    },
+    {
+      "type": "click",
+      "target": {
+        "role": "button",
+        "name": "Continue"
+      }
+    },
+    {
+      "type": "assertVisible",
+      "target": {
+        "role": "heading",
+        "name": "Dashboard"
+      }
+    },
+    {
+      "type": "assertUrl",
+      "path": "/dashboard"
+    },
+    {
+      "type": "screenshot",
+      "name": "dashboard"
+    }
+  ]
+}
